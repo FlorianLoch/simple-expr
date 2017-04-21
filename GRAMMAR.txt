@@ -1,0 +1,36 @@
+// We do not allow empty expressions!
+E -> Expr #
+
+// This rule is contained in AddExpr, it also causes a conflict here, so drop it
+// Expr -> (AddExpr)                                                    (
+Expr -> AddExpr                                                         id, num, (
+// Can be combined with first rule to:
+Expr -> AddExpr #                                                       id, num, (
+
+// AddExpr -> MulExpr plus AddExpr
+// AddExpr -> MulExpr minus AddExpr
+// AddExpr -> MulExpr
+AddExpr -> MulExpr AddExpr'                                             id, num, (
+AddExpr' -> plus AddExpr                                                plus
+AddExpr' -> minus AddExpr                                               minus
+AddExpr' -> EPS                                                         #
+
+// MulExpr -> PowerExpression mul MulExpr
+// MulExpr -> PowerExpression div MulExpr
+// MulExpr -> PowerExpression mod MulExpr
+// MulExpr -> PowerExpression
+MulExpr -> PowerExpression MulExpr'                                     id, num, (
+MulExpr' -> mul MulExpr                                                 mul
+MulExpr' -> div MulExpr                                                 div
+MulExpr' -> mod MulExpr                                                 mod
+MulExpr' -> EPS                                                         plus, minus, #
+
+// PowerExpression -> CoherentExpression power CoherentExpression
+// PowerExpression -> CoherentExpression
+PowerExpression -> CoherentExpression PowerExpression'                  id, num, (
+PowerExpression' -> power CoherentExpression                            power
+PowerExpression' -> EPS                                                 mul, div, mod, plus, minus, #
+
+CoherentExpression -> (AddExpr)                                         (
+CoherentExpression -> num                                               num
+CoherentExpression -> id                                                id
