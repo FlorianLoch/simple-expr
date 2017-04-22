@@ -3,14 +3,18 @@ E -> Expr #
 
 // This rule is contained in AddExpr, it also causes a conflict here, so drop it
 // Expr -> (AddExpr)                                                    (
-Expr -> AddExpr                                                         id, num, (
-// Can be combined with first rule to:
+// Can be combined with first rule
+// Expr -> AddExpr                                                      id, num, (
+// to:
 Expr -> AddExpr #                                                       id, num, (
 
 // AddExpr -> MulExpr plus AddExpr
 // AddExpr -> MulExpr minus AddExpr
 // AddExpr -> MulExpr
-AddExpr -> MulExpr AddExpr'                                             id, num, (
+AddExpr -> Sign MulExpr AddExpr'                                        id, num, (, plus, minus
+Sign -> plus                                                            plus
+Sign -> minus                                                           minus
+Sign -> EPS                                                             id, num, (
 AddExpr' -> plus AddExpr                                                plus
 AddExpr' -> minus AddExpr                                               minus
 AddExpr' -> EPS                                                         #
@@ -31,6 +35,6 @@ PowerExpression -> CoherentExpression PowerExpression'                  id, num,
 PowerExpression' -> power CoherentExpression                            power
 PowerExpression' -> EPS                                                 mul, div, mod, plus, minus, #
 
-CoherentExpression -> (AddExpr)                                         (
+CoherentExpression -> ( AddExpr )                                       (
 CoherentExpression -> num                                               num
 CoherentExpression -> id                                                id
