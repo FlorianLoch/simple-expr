@@ -12,7 +12,7 @@ export enum TokenType {
     EOF
 }
 
-class Token {
+export class Token {
     constructor(public line: number, public column: number, public type: TokenType, public raw: string, public value: number | string) {}
 }
 
@@ -74,22 +74,23 @@ export class Lexer {
         
             this.col++;
 
-
-            this.buffer = this.buffer + c.trim();
+            const trimmedC = c.trim();
+            this.buffer = this.buffer + trimmedC;
 
             const shallContinue = fn(c, cc);
 
             if (!shallContinue) {
                 this.idx--;
-                this.buffer = this.buffer.substr(0, this.buffer.length - 1)
+                // Just remove the last character if we actually added the current char (i.e. it wasn't just whitespace)
+                if (trimmedC.length === 1) {
+                    this.buffer = this.buffer.substr(0, this.buffer.length - 1)
+                }
                 break;
             }
         }      
     }
 
     private lexNumber() {
-        console.log("Lex Number");
-
         let dotsFound = 0;
 
         this.iterate((c: string, cc: number): boolean => {
@@ -118,11 +119,11 @@ export class Lexer {
         this.iterate((c: string, cc: number): boolean => {
             const isDigit = cc >= 48 && cc <= 57;
             const isLetter = (cc >= 65 && cc <= 90) || (cc >= 97 && cc <= 122);
-        
+            
             return isDigit || isLetter;
         });
 
-        this.createToken(TokenType.NUM, parseFloat(this.buffer));        
+        this.createToken(TokenType.ID, this.buffer);        
     }
 
     private createToken(type: TokenType, value?: string | number): void {

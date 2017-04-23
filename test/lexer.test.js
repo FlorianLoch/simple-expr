@@ -14,27 +14,42 @@ describe("Lexer", () => {
         it("should be able to handle simple lexing", () => {
             const expected = [[
                     "135.35", [{
-                        tokenType: TokenType["NUM"],
+                        tokenType: TokenType.NUM,
                         value: 135.35
                     }, {
-                        tokenType: TokenType["EOF"]
+                        tokenType: TokenType.EOF
                     }]
                 ], [
                     "abc + 135.35 / (54 + d1)", [{
-                        tokenType: TokenType["NUM"],
+                        tokenType: TokenType.ID,
+                        value: "abc"
+                    }, {
+                        tokenType: TokenType.PLUS
+                    }, {
+                        tokenType: TokenType.NUM,
                         value: 135.35
                     }, {
-                        tokenType: TokenType["EOF"]
+                        tokenType: TokenType.DIV 
+                    }, {
+                        tokenType: TokenType.L_PAR 
+                    }, {
+                        tokenType: TokenType.NUM,
+                        value: 54
+                    }, {
+                        tokenType: TokenType.PLUS,
+                    }, {
+                        tokenType: TokenType.ID,
+                        value: "d1"
+                    }, {
+                        tokenType: TokenType.R_PAR 
+                    }, {
+                        tokenType: TokenType.EOF
                     }]
                 ]
             ];
 
             expected.forEach((item) => {
                 const tokens = l.lex(item[0]);
-                
-                console.log(item[0]);
-                console.log(tokens);
-                console.log(item[1]);
 
                 expect(tokens.length).to.be.equal(item[1].length);
 
