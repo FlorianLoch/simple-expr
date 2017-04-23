@@ -6,15 +6,12 @@ E -> Expr #
 // Can be combined with first rule
 // Expr -> AddExpr                                                      id, num, (
 // to:
-Expr -> AddExpr #                                                       id, num, (
+Expr -> AddExpr #                                                       id, num, (, plus, minus
 
 // AddExpr -> MulExpr plus AddExpr
 // AddExpr -> MulExpr minus AddExpr
 // AddExpr -> MulExpr
-AddExpr -> Sign MulExpr AddExpr'                                        id, num, (, plus, minus
-Sign -> plus                                                            plus
-Sign -> minus                                                           minus
-Sign -> EPS                                                             id, num, (
+AddExpr -> MulExpr AddExpr'                                             id, num, (, plus, minus
 AddExpr' -> plus AddExpr                                                plus
 AddExpr' -> minus AddExpr                                               minus
 AddExpr' -> EPS                                                         #
@@ -23,17 +20,21 @@ AddExpr' -> EPS                                                         #
 // MulExpr -> PowerExpression div MulExpr
 // MulExpr -> PowerExpression mod MulExpr
 // MulExpr -> PowerExpression
-MulExpr -> PowerExpression MulExpr'                                     id, num, (
+MulExpr -> PowerExpression MulExpr'                                     id, num, (, minus, plus
 MulExpr' -> mul MulExpr                                                 mul
 MulExpr' -> div MulExpr                                                 div
 MulExpr' -> mod MulExpr                                                 mod
 MulExpr' -> EPS                                                         plus, minus, #
 
-// PowerExpression -> CoherentExpression power CoherentExpression
-// PowerExpression -> CoherentExpression
-PowerExpression -> CoherentExpression PowerExpression'                  id, num, (
-PowerExpression' -> power CoherentExpression                            power
+// PowerExpression -> SignedExpression power SignedExpression
+// PowerExpression -> SignedExpression
+PowerExpression -> SignedExpression PowerExpression'                    id, num, (, minus, plus
+PowerExpression' -> power SignedExpression                              power
 PowerExpression' -> EPS                                                 mul, div, mod, plus, minus, #
+
+SignedExpression -> plus CoherentExpression                             plus
+SignedExpression -> minus CoherentExpression                            minus
+SignedExpression -> CoherentExpression                                  (, num, id
 
 CoherentExpression -> ( AddExpr )                                       (
 CoherentExpression -> num                                               num
