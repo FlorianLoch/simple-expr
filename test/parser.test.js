@@ -18,10 +18,32 @@ describe("Parser", () => {
             ];
 
             expected.forEach((item) => {
-                const tokens = p.parse(item);
-
-                expect(p.parse.bind(p, item)).not.to.throw();
+                 expect(p.parse.bind(p, item)).not.to.throw();
             });
+        });
+    });
+
+    describe("eval", () => {
+        it("should compute the correct value of an expression", (done) => {
+            const expected = [
+                ["45*2-10/2^2", 87.5]
+            ];
+
+            step(0);
+
+            function step(idx) {
+                if (idx === expected.length) {
+                    return done();
+                }
+
+                const item = expected[idx];
+                const rootNode = p.parse(item[0]);
+
+                rootNode.eval((result) => {
+                    expect(result).to.be.equal(item[1]);
+                    step(++idx);
+                });
+            }
         });
     });
 });
