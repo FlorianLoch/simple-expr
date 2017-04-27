@@ -9,7 +9,8 @@ module.exports = function (grunt) {
                 dest: '.',
                 options: {
                     target: 'es5', //or es3
-                    module: "commonjs"
+                    module: "commonjs",
+                    declaration: true
                 }
             }
         },

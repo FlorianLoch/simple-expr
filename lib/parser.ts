@@ -55,10 +55,10 @@ type OpTupel = {
     operand: Node 
 };
 
-interface EvaluateCallback { (resolved: number): void }
-interface IDResolver { (id: string, cb: EvaluateCallback): void }
+export interface EvaluateCallback { (resolved: number): void }
+export interface IDResolver { (id: string, cb: EvaluateCallback): void }
 
-abstract class Node {
+export abstract class Node {
     private negativeSign = false;
 
     public setNegativeSign() {
