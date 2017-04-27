@@ -26,8 +26,13 @@ describe("Parser", () => {
     describe("eval", () => {
         it("should compute the correct value of an expression", (done) => {
             const expected = [
-                ["45*2-10/2^2", 87.5]
+                ["45*2-10/2^2", 87.5],
+                ["2*abc", 8]
             ];
+
+            const varLookup = {
+                "abc": 4
+            };
 
             step(0);
 
@@ -39,9 +44,11 @@ describe("Parser", () => {
                 const item = expected[idx];
                 const rootNode = p.parse(item[0]);
 
-                rootNode.eval((result) => {
+                return rootNode.eval(function next(result) {
                     expect(result).to.be.equal(item[1]);
-                    step(++idx);
+                    return step(++idx);
+                }, function varResolver(varName, next){
+                    return next(varLookup[varName]);
                 });
             }
         });

@@ -122,10 +122,10 @@ class OpNode extends Node {
             
             const {op, operand} = self.operations[idx];
 
-            operand.eval((value: number) => {
+            return operand.eval((value: number) => {
                 const newValue = OP_CALC_MAPPING[op](prevValue, value);
-                step(++idx, newValue); 
-            });
+                return step(++idx, newValue); 
+            }, resolver);
         }
     };
 
@@ -310,16 +310,10 @@ export class Parser {
             if (tt === TokenType.MINUS) {
                 head.setNegativeSign();
             }
-
-            // console.log("Signed Head", head);
-            
         }
         else {
             this.rewind();
             head = this.parseCoherentExpr();
-    
-            // console.log("Unsigned Head", head);
-            
         }
 
         const node = new OpNode(head);
