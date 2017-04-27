@@ -1,6 +1,6 @@
 {
   "name": "simple-expr",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "A simple parser for mathematical expressions also able to handle variables",
   "main": "index.js",
   "scripts": {
