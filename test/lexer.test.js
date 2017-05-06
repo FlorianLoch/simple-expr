@@ -45,6 +45,32 @@ describe("Lexer", () => {
                     }, {
                         tokenType: TokenType.EOF
                     }]
+                ], [
+                    "(abc || !true) != false && 2", [{
+                        tokenType: TokenType.L_PAR
+                    }, {
+                        tokenType: TokenType.ID,
+                        value: "abc"
+                    }, {
+                        tokenType: TokenType.OR
+                    }, {
+                        tokenType: TokenType.NEGATE
+                    }, {
+                        tokenType: TokenType.ID,
+                        value: "true"
+                    }, {
+                        tokenType: TokenType.R_PAR
+                    }, {
+                        tokenType: TokenType.NE
+                    }, {
+                        tokenType: TokenType.ID,
+                        value: "false"
+                    }, {
+                        tokenType: TokenType.AND
+                    }, {
+                        tokenType: TokenType.NUM,
+                        value: 2
+                    }]
                 ]
             ];
 

@@ -27,11 +27,15 @@ describe("Parser", () => {
         it("should compute the correct value of an expression", (done) => {
             const expected = [
                 ["45*2-10/2^2", 87.5],
-                ["2*abc", 8]
+                ["2*abc", 8],
+                ["abc", 4],
+                ["HUMID - TEMP", 244.95]
             ];
 
             const varLookup = {
-                "abc": 4
+                "abc": 4,
+                "HUMID": 100,
+                "TEMP": -144.95
             };
 
             step(0);

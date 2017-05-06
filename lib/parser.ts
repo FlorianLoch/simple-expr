@@ -11,7 +11,15 @@ enum Operator {
     DIV,
     MOD,
     MUL,
-    POW
+    POW,
+    OR,
+    AND,
+    EQ,
+    NE,
+    GREATER,
+    LOWER,
+    GE,
+    LE
 };
 
 const OP_MAPPING = {};
@@ -21,6 +29,14 @@ OP_MAPPING[TokenType.DIV] = Operator.DIV;
 OP_MAPPING[TokenType.MOD] = Operator.MOD;
 OP_MAPPING[TokenType.MUL] = Operator.MUL;
 OP_MAPPING[TokenType.POW] = Operator.POW;
+OP_MAPPING[TokenType.OR] = Operator.OR;
+OP_MAPPING[TokenType.AND] = Operator.AND;
+OP_MAPPING[TokenType.EQ] = Operator.EQ;
+OP_MAPPING[TokenType.NE] = Operator.NE;
+OP_MAPPING[TokenType.GREATER] = Operator.GREATER;
+OP_MAPPING[TokenType.LOWER] = Operator.LOWER;
+OP_MAPPING[TokenType.GE] = Operator.GE;
+OP_MAPPING[TokenType.LE] = Operator.LE;
 
 const OP_PRINTABLE_CHAR_MAPPING = {};
 OP_PRINTABLE_CHAR_MAPPING[Operator.PLUS] = "+";
@@ -29,6 +45,14 @@ OP_PRINTABLE_CHAR_MAPPING[Operator.DIV] = "/";
 OP_PRINTABLE_CHAR_MAPPING[Operator.MOD] = "%";
 OP_PRINTABLE_CHAR_MAPPING[Operator.MUL] = "*";
 OP_PRINTABLE_CHAR_MAPPING[Operator.POW] = "^";
+OP_PRINTABLE_CHAR_MAPPING[Operator.OR] = "||";
+OP_PRINTABLE_CHAR_MAPPING[Operator.AND] = "&&";
+OP_PRINTABLE_CHAR_MAPPING[Operator.EQ] = "==";
+OP_PRINTABLE_CHAR_MAPPING[Operator.NE] = "!=";
+OP_PRINTABLE_CHAR_MAPPING[Operator.GREATER] = ">";
+OP_PRINTABLE_CHAR_MAPPING[Operator.LOWER] = "<";
+OP_PRINTABLE_CHAR_MAPPING[Operator.GE] = ">=";
+OP_PRINTABLE_CHAR_MAPPING[Operator.LE] = "<=";
 
 const OP_CALC_MAPPING = {};
 OP_CALC_MAPPING[Operator.PLUS] = (a: number, b: number) => {
@@ -49,13 +73,38 @@ OP_CALC_MAPPING[Operator.MUL] = (a: number, b: number) => {
 OP_CALC_MAPPING[Operator.POW] = (a: number, b: number) => {
     return Math.pow(a, b);
 };
+OP_CALC_MAPPING[Operator.OR] = (a: number, b: number) => {
+    return a || b;
+};
+OP_CALC_MAPPING[Operator.AND] = (a: number, b: number) => {
+    return a && b;
+};
+OP_CALC_MAPPING[Operator.EQ] = (a: number, b: number) => {
+    return a === b;
+};
+OP_CALC_MAPPING[Operator.NE] = (a: number, b: number) => {
+    return a !== b;
+};
+OP_CALC_MAPPING[Operator.GREATER] = (a: number, b: number) => {
+    return a > b;
+};
+OP_CALC_MAPPING[Operator.LOWER] = (a: number, b: number) => {
+    return a < b;
+};
+OP_CALC_MAPPING[Operator.GE] = (a: number, b: number) => {
+    return a >= b;
+};
+OP_CALC_MAPPING[Operator.LE] = (a: number, b: number) => {
+    return a <= b;
+};
 
 type OpTupel = {
     op: Operator,
-    operand: Node 
+    operand: Node
 };
 
-export interface EvaluateCallback { (resolved: number): void }
+export interface EvaluateCallback { (resolved: number | boolean): void }
+// TODO make abstract class that automatically resolves true and false to its boolean representation
 export interface IDResolver { (id: string, cb: EvaluateCallback): void }
 
 export abstract class Node {
@@ -75,13 +124,13 @@ export abstract class Node {
                 throw new Error("No IDResolver defined! IDs cannot be resolved therefore!");
             };
         }
-        
+
         if (this.negativeSign) {
-            this.evaluate((res: number) => {
-                next(-res);    
+            this.evaluate((res: number | boolean) => {
+                next(typeof res == "number" ? -res : !res);
             }, resolver);
         }
-        
+
         this.evaluate(next, resolver);
     }
 
@@ -119,12 +168,18 @@ class OpNode extends Node {
             if (idx === self.operations.length) {
                 return next(prevValue);
             }
-            
+
             const {op, operand} = self.operations[idx];
 
-            return operand.eval((value: number) => {
+            return operand.eval((value: number | boolean) => {
+                // TODO Check coercion, throw error if not convertible (probably we should not do any implicit conversions!)
+
                 const newValue = OP_CALC_MAPPING[op](prevValue, value);
-                return step(++idx, newValue); 
+
+                // evaluate with shortcircuit if enabled and possible
+                // TODO
+
+                return step(++idx, newValue);
             }, resolver);
         }
     };
@@ -132,7 +187,7 @@ class OpNode extends Node {
     public stringify(depth = 0): string {
         let str = "";
 
-        // Give a hint if this is the root node 
+        // Give a hint if this is the root node
         if (depth === 0) {
             str = "--- ROOT NODE ---\n";
         }
@@ -150,8 +205,8 @@ class OpNode extends Node {
     }
 }
 
-class NumberNode extends Node {
-    constructor(public value: number) {
+class ValNode extends Node {
+    constructor(public value: number | boolean) {
         super();
     };
 
@@ -160,7 +215,7 @@ class NumberNode extends Node {
     };
 
     public stringify(depth = 0): string {
-        return `NumberNode (value: ${this.hasNegativeSign() ? "-" : ""}${this.value})`;
+        return `ValNode (value: ${this.hasNegativeSign() ? (typeof this.value == "number" ? "-" : "!") : ""}${this.value})`;
     }
 }
 
@@ -241,13 +296,47 @@ export class Parser {
     }
 
     private parseE(): Node {
-        const rootNode = this.parseAddExpr();
+        const rootNode = this.parseLogExpr();
         this.expect(TokenType.EOF, true);
 
         return rootNode;
     }
 
-    private parseAddExpr(): Node {
+    private parseLogExpr(): OpNode {
+        const node = this.parseRelExpr();
+
+        let t;
+        while ((t = this.expect([TokenType.OR, TokenType.AND])).found) {
+            const nextNode = this.parseRelExpr();
+            node.addOperation({
+                op: OP_MAPPING[t.token.type],
+                operand: nextNode
+            });
+        }
+
+        this.rewind();
+
+        return node;
+    }
+
+    private parseRelExpr(): OpNode {
+        const node = this.parseAddExpr();
+
+        let t;
+        while ((t = this.expect([TokenType.EQ, TokenType.NE, TokenType.GREATER, TokenType.LOWER, TokenType.GE, TokenType.LE])).found) {
+            const nextNode = this.parseAddExpr();
+            node.addOperation({
+                op: OP_MAPPING[t.token.type],
+                operand: nextNode
+            });
+        }
+
+        this.rewind();
+
+        return node;
+    }
+
+    private parseAddExpr(): OpNode {
         const node = this.parseMulExpr();
 
         let t;
@@ -306,7 +395,7 @@ export class Parser {
         let head: Node;
         if (tt === TokenType.PLUS || tt === TokenType.MINUS) {
             head = this.parseCoherentExpr();
-            
+
             if (tt === TokenType.MINUS) {
                 head.setNegativeSign();
             }
@@ -331,7 +420,7 @@ export class Parser {
             return node;
         }
         else if (tt === TokenType.NUM) {
-            return new NumberNode(<number> tuple.token.value);
+            return new ValNode(<number> tuple.token.value);
         }
         else if (tt === TokenType.ID) {
             return new IdNode(<string> tuple.token.value);

@@ -8,7 +8,7 @@ module.exports = function (grunt) {
                 src: ['lib/*.ts'],
                 dest: '.',
                 options: {
-                    target: 'es5', //or es3
+                    target: 'es5',
                     module: "commonjs",
                     declaration: true
                 }

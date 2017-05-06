@@ -9,7 +9,16 @@ export enum TokenType {
     POW,
     NUM,
     ID,
-    EOF
+    EOF,
+    NEGATE,
+    OR,
+    AND,
+    GREATER,
+    GE,
+    EQ,
+    NE,
+    LOWER,
+    LE
 }
 
 export class Token {
@@ -25,7 +34,16 @@ const SIMPLE_TOKEN_MAPPING = {
     "%": TokenType.MOD,
     "*": TokenType.MUL,
     "^": TokenType.POW,
-    "#": TokenType.EOF
+    "#": TokenType.EOF,
+    "!": TokenType.NEGATE,
+    "||": TokenType.OR,
+    "&&": TokenType.AND,
+    ">": TokenType.GREATER,
+    ">=": TokenType.GE,
+    "==": TokenType.EQ,
+    "!=": TokenType.NE,
+    "<": TokenType.LOWER,
+    "<=": TokenType.LE
 };
 
 export class Lexer {
@@ -41,8 +59,16 @@ export class Lexer {
         this.src = src;
         this.tokens = [];
 
-        this.iterate((c: string, cc: number): boolean  => {
+        this.iterate((c: string, cc: number, tail: string): boolean  => {
+            const lookup2Chars = SIMPLE_TOKEN_MAPPING[tail.substr(0, 2)];
+            
+            if (lookup2Chars) {
+                this.createToken(lookup2Chars);                
+                return true;
+            }
+
             const lookup = SIMPLE_TOKEN_MAPPING[c];
+            
             if (lookup !== undefined) {
                 this.createToken(lookup);
             }
@@ -59,12 +85,13 @@ export class Lexer {
         return this.tokens;
     }
 
-    private iterate(fn: (c: string, cc: number) => boolean) {
+    private iterate(fn: (c: string, cc: number, tail: string) => number | boolean) {
         this.buffer = "";
 
         for (; this.idx < this.src.length + 1; this.idx++) {
             const c = this.idx == this.src.length ? "#" : this.src[this.idx];
             const cc = c.charCodeAt(0);
+            const tail = this.src.substr(this.idx);
 
             if (c === "\n") {
                 this.col = -1;
@@ -77,7 +104,7 @@ export class Lexer {
             const trimmedC = c.trim();
             this.buffer = this.buffer + trimmedC;
 
-            const shallContinue = fn(c, cc);
+            const shallContinue = fn(c, cc, tail);
 
             if (!shallContinue) {
                 this.idx--;
