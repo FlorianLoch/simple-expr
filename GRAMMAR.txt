@@ -6,7 +6,21 @@ E -> Expr #
 // Can be combined with first rule
 // Expr -> AddExpr                                                      id, num, (
 // to:
-Expr -> AddExpr #                                                       id, num, (, plus, minus
+Expr -> LogExpr                                                         id, num, (, plus, minus
+
+LogExpr -> RelExpr LogExpr'                                             id, num, (, plus, minus
+LogExpr' -> or LogExpr                                                  or
+LogExpr' -> and LogExpr                                                 and
+LogExpr' -> EPS                                                         #
+
+RelExpr -> AddExpr RelExpr'                                             id, num, (, plus, minus
+RelExpr' -> lower RelExpr                                               lower
+RelExpr' -> greater RelExpr                                             greater
+RelExpr' -> le RelExpr                                                  le
+RelExpr' -> ge RelExpr                                                  ge
+RelExpr' -> equal RelExpr                                               equal
+RelExpr' -> notequal RelExpr                                            notequal
+RelExpr' -> EPS                                                         or, and, #
 
 // AddExpr -> MulExpr plus AddExpr
 // AddExpr -> MulExpr minus AddExpr
@@ -14,7 +28,7 @@ Expr -> AddExpr #                                                       id, num,
 AddExpr -> MulExpr AddExpr'                                             id, num, (, plus, minus
 AddExpr' -> plus AddExpr                                                plus
 AddExpr' -> minus AddExpr                                               minus
-AddExpr' -> EPS                                                         #
+AddExpr' -> EPS                                                         lower, greater, le, ge, equal, notequal, or, and, #
 
 // MulExpr -> PowerExpression mul MulExpr
 // MulExpr -> PowerExpression div MulExpr
@@ -24,18 +38,20 @@ MulExpr -> PowerExpression MulExpr'                                     id, num,
 MulExpr' -> mul MulExpr                                                 mul
 MulExpr' -> div MulExpr                                                 div
 MulExpr' -> mod MulExpr                                                 mod
-MulExpr' -> EPS                                                         plus, minus, #
+MulExpr' -> EPS                                                         lower, greater, le, ge, equal, notequal, or, and, plus, minus, #
 
 // PowerExpression -> SignedExpression power SignedExpression
 // PowerExpression -> SignedExpression
 PowerExpression -> SignedExpression PowerExpression'                    id, num, (, minus, plus
 PowerExpression' -> power SignedExpression                              power
-PowerExpression' -> EPS                                                 mul, div, mod, plus, minus, #
+PowerExpression' -> EPS                                                 lower, greater, le, ge, equal, notequal, or, and, mul, div, mod, plus, minus, #
 
 SignedExpression -> plus CoherentExpression                             plus
 SignedExpression -> minus CoherentExpression                            minus
+SignedExpression -> negate CoherentExpression                           negate
 SignedExpression -> CoherentExpression                                  (, num, id
 
 CoherentExpression -> ( AddExpr )                                       (
 CoherentExpression -> num                                               num
 CoherentExpression -> id                                                id
+CoherentExpression -> bool
