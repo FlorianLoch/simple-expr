@@ -22,6 +22,12 @@ enum Operator {
     LE
 };
 
+enum Type {
+    BOOL,
+    NUM,
+    DONT_CARE
+};
+
 const OP_MAPPING = {};
 OP_MAPPING[TokenType.PLUS] = Operator.PLUS;
 OP_MAPPING[TokenType.MINUS] = Operator.MINUS;
@@ -54,48 +60,62 @@ OP_PRINTABLE_CHAR_MAPPING[Operator.LOWER] = "<";
 OP_PRINTABLE_CHAR_MAPPING[Operator.GE] = ">=";
 OP_PRINTABLE_CHAR_MAPPING[Operator.LE] = "<=";
 
-const OP_CALC_MAPPING = {};
-OP_CALC_MAPPING[Operator.PLUS] = (a: number, b: number) => {
+const OP_CALC_MAPPING_NUM = {};
+OP_CALC_MAPPING_NUM[Operator.PLUS] = (a: number, b: number) => {
     return a + b;
 };
-OP_CALC_MAPPING[Operator.MINUS] = (a: number, b: number) => {
+OP_CALC_MAPPING_NUM[Operator.MINUS] = (a: number, b: number) => {
     return a - b;
 };
-OP_CALC_MAPPING[Operator.DIV] = (a: number, b: number) => {
+OP_CALC_MAPPING_NUM[Operator.DIV] = (a: number, b: number) => {
     return a / b;
 };
-OP_CALC_MAPPING[Operator.MOD] = (a: number, b: number) => {
+OP_CALC_MAPPING_NUM[Operator.MOD] = (a: number, b: number) => {
     return a % b;
 };
-OP_CALC_MAPPING[Operator.MUL] = (a: number, b: number) => {
+OP_CALC_MAPPING_NUM[Operator.MUL] = (a: number, b: number) => {
     return a * b;
 };
-OP_CALC_MAPPING[Operator.POW] = (a: number, b: number) => {
+OP_CALC_MAPPING_NUM[Operator.POW] = (a: number, b: number) => {
     return Math.pow(a, b);
 };
-OP_CALC_MAPPING[Operator.OR] = (a: number, b: number) => {
-    return a || b;
-};
-OP_CALC_MAPPING[Operator.AND] = (a: number, b: number) => {
-    return a && b;
-};
-OP_CALC_MAPPING[Operator.EQ] = (a: number, b: number) => {
+OP_CALC_MAPPING_NUM[Operator.EQ] = (a: number, b: number) => {
     return a === b;
 };
-OP_CALC_MAPPING[Operator.NE] = (a: number, b: number) => {
+OP_CALC_MAPPING_NUM[Operator.NE] = (a: number, b: number) => {
     return a !== b;
 };
-OP_CALC_MAPPING[Operator.GREATER] = (a: number, b: number) => {
+OP_CALC_MAPPING_NUM[Operator.GREATER] = (a: number, b: number) => {
     return a > b;
 };
-OP_CALC_MAPPING[Operator.LOWER] = (a: number, b: number) => {
+OP_CALC_MAPPING_NUM[Operator.LOWER] = (a: number, b: number) => {
     return a < b;
 };
-OP_CALC_MAPPING[Operator.GE] = (a: number, b: number) => {
+OP_CALC_MAPPING_NUM[Operator.GE] = (a: number, b: number) => {
     return a >= b;
 };
-OP_CALC_MAPPING[Operator.LE] = (a: number, b: number) => {
+OP_CALC_MAPPING_NUM[Operator.LE] = (a: number, b: number) => {
     return a <= b;
+};
+
+const OP_CALC_MAPPING_BOOL = {};
+OP_CALC_MAPPING_BOOL[Operator.OR] = (a: boolean, b: boolean) => {
+    return (a === true) || (b === true);
+};
+OP_CALC_MAPPING_BOOL[Operator.AND] = (a: boolean, b: boolean) => {
+    return (a === true) && (b === true);
+};
+OP_CALC_MAPPING_BOOL[Operator.EQ] = (a: boolean, b: boolean) => {
+    return a === b;
+};
+OP_CALC_MAPPING_BOOL[Operator.NE] = (a: boolean, b: boolean) => {
+    return a !== b;
+};
+
+// TODO Add some more predefined ids like PI etc.
+const PREDEFINED_IDS = {
+    "false": false,
+    "true": true
 };
 
 type OpTupel = {
@@ -104,8 +124,22 @@ type OpTupel = {
 };
 
 export interface EvaluateCallback { (resolved: number | boolean): void }
+
 // TODO make abstract class that automatically resolves true and false to its boolean representation
-export interface IDResolver { (id: string, cb: EvaluateCallback): void }
+export abstract class IDResolver {   
+    protected abstract _resolve(id: string, cb: EvaluateCallback): void;
+
+    public resolve(id: string, cb: EvaluateCallback): void {
+        const lookup = PREDEFINED_IDS[id.toLowerCase()];
+
+        if (lookup !== undefined) {
+            cb(lookup);
+            return;
+        }
+
+        this._resolve(id, cb);
+    }
+}
 
 export abstract class Node {
     private negativeSign = false;
@@ -120,8 +154,10 @@ export abstract class Node {
 
     public eval(next: EvaluateCallback, resolver?: IDResolver): void {
         if (resolver === undefined) {
-            resolver = (id: string): number => {
-                throw new Error("No IDResolver defined! IDs cannot be resolved therefore!");
+            resolver = new class extends IDResolver {
+                protected _resolve(id: string, cb: EvaluateCallback): void {
+                    throw new Error("No IDResolver defined! IDs cannot be resolved therefore!");                    
+                }
             };
         }
 
@@ -161,10 +197,11 @@ class OpNode extends Node {
 
     protected evaluate(next: EvaluateCallback, resolver: IDResolver): void {
         const self = this;
+        let typeOfHead;
 
         this.head.eval(step.bind(null, 0), resolver);
 
-        function step(idx: number, prevValue: number) {
+        function step(idx: number, prevValue: number | boolean) {
             if (idx === self.operations.length) {
                 return next(prevValue);
             }
@@ -172,9 +209,20 @@ class OpNode extends Node {
             const {op, operand} = self.operations[idx];
 
             return operand.eval((value: number | boolean) => {
-                // TODO Check coercion, throw error if not convertible (probably we should not do any implicit conversions!)
+                let handler = OP_CALC_MAPPING_NUM[op]
+                if (handler !== undefined) {
+                    if (typeof value !== "number" || typeof value !== typeof prevValue) {
+                        throw new Error("Cannot use '" + value + "' and '" + prevValue + "' as operands for '" + OP_PRINTABLE_CHAR_MAPPING[op] + "'. Type 'number' expected.");
+                    }
+                }
+                else {
+                    if (typeof value !== "boolean" || typeof value !== typeof prevValue) {
+                        throw new Error("Cannot use '" + value + "' and '" + prevValue + "' as operands for '" + OP_PRINTABLE_CHAR_MAPPING[op] + "'. Type 'boolean' expected.");
+                    }
+                    handler = OP_CALC_MAPPING_BOOL[op];
+                }
 
-                const newValue = OP_CALC_MAPPING[op](prevValue, value);
+                const newValue = handler(prevValue, value);
 
                 // evaluate with shortcircuit if enabled and possible
                 // TODO
@@ -225,7 +273,7 @@ class IdNode extends Node {
     };
 
     protected evaluate(next: EvaluateCallback, resolver: IDResolver): void {
-        resolver(this.name, (resolved: number) => {
+        resolver.resolve(this.name, (resolved: number | boolean) => {
             next(resolved);
         });
     };
@@ -388,15 +436,15 @@ export class Parser {
     }
 
     private parseSignedExpr(): OpNode {
-        const expectedTypes = [TokenType.PLUS, TokenType.MINUS, TokenType.L_PAR, TokenType.NUM, TokenType.ID];
+        const expectedTypes = [TokenType.PLUS, TokenType.MINUS, TokenType.L_PAR, TokenType.NUM, TokenType.ID, TokenType.NEGATE];
         const tuple = this.expect(expectedTypes, true);
 
         const tt = tuple.token.type;
         let head: Node;
-        if (tt === TokenType.PLUS || tt === TokenType.MINUS) {
+        if (tt === TokenType.PLUS || tt === TokenType.MINUS || tt === TokenType.NEGATE) {
             head = this.parseCoherentExpr();
 
-            if (tt === TokenType.MINUS) {
+            if (tt !== TokenType.PLUS) {
                 head.setNegativeSign();
             }
         }
@@ -415,7 +463,7 @@ export class Parser {
 
         const tt = tuple.token.type;
         if (tt === TokenType.L_PAR) {
-            const node = this.parseAddExpr();
+            const node = this.parseLogExpr();
             this.expect(TokenType.R_PAR, true);
             return node;
         }

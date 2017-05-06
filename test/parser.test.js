@@ -2,6 +2,7 @@ const expect = require("chai").expect;
 
 const Parser = require("../lib/parser.js").Parser;
 const TokenType = require("../lib/lexer.js").TokenType;
+const IDResolver = require("../lib/parser.js").IDResolver;
 
 describe("Parser", () => {
     let p;
@@ -24,37 +25,36 @@ describe("Parser", () => {
     });
 
     describe("eval", () => {
-        it("should compute the correct value of an expression", (done) => {
-            const expected = [
-                ["45*2-10/2^2", 87.5],
-                ["2*abc", 8],
-                ["abc", 4],
-                ["HUMID - TEMP", 244.95]
-            ];
+        const expected = [
+            ["45*2-10/2^2", 87.5],
+            ["2*abc", 8],
+            ["abc", 4],
+            ["HUMID - TEMP", 244.95],
+            ["false || (false || 1 == 1)", true],
+            ["1 < 2 || false", true],
+            ["!false", true]
+        ];
 
-            const varLookup = {
-                "abc": 4,
-                "HUMID": 100,
-                "TEMP": -144.95
-            };
+        const varLookup = {
+            "abc": 4,
+            "HUMID": 100,
+            "TEMP": -144.95
+        };
 
-            step(0);
+        const resolver = new IDResolver();
+        resolver.__proto__._resolve = (varName, next) => {
+            return next(varLookup[varName]);
+        };
 
-            function step(idx) {
-                if (idx === expected.length) {
-                    return done();
-                }
-
-                const item = expected[idx];
+        expected.forEach((item) => {
+            it("should compute the correct value of an expression: " + item[0], (done) => {
                 const rootNode = p.parse(item[0]);
 
                 return rootNode.eval(function next(result) {
                     expect(result).to.be.equal(item[1]);
-                    return step(++idx);
-                }, function varResolver(varName, next){
-                    return next(varLookup[varName]);
-                });
-            }
+                    return done();
+                }, resolver);
+            });
         });
     });
 });
