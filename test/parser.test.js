@@ -2,7 +2,7 @@ const expect = require("chai").expect;
 
 const Parser = require("../lib/parser.js").Parser;
 const TokenType = require("../lib/lexer.js").TokenType;
-const IDResolver = require("../lib/parser.js").IDResolver;
+const IDResolver = require("../lib/evaluation.js").IDResolver;
 
 describe("Parser", () => {
     let p;
