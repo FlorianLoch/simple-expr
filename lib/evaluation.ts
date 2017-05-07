@@ -108,10 +108,12 @@ export type OpTupel = {
 
 export interface EvaluateCallback { (resolved: number | boolean): void }
 
-// TODO Add some more predefined ids like PI etc.
 const PREDEFINED_IDS = {
   "false": false,
-  "true": true
+  "true": true,
+  "pi": Math.PI,
+  "e": Math.E,
+  "sqrt2": Math.SQRT2
 };
 
 export abstract class IDResolver {

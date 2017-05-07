@@ -32,7 +32,8 @@ describe("Parser", () => {
             ["HUMID - TEMP", 244.95],
             ["false || (false || 1 == 1)", true],
             ["1 < 2 || false", true],
-            ["!false", true]
+            ["!false", true],
+            ["pi * e", Math.PI * Math.E]
         ];
 
         const varLookup = {
