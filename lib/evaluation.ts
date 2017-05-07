@@ -101,12 +101,6 @@ OP_CALC_MAPPING_BOOL[Operator.NE] = (a: boolean, b: boolean) => {
   return a !== b;
 };
 
-// TODO Add some more predefined ids like PI etc.
-const PREDEFINED_IDS = {
-  "false": false,
-  "true": true
-};
-
 export type OpTupel = {
   op: Operator,
   operand: Node
@@ -114,7 +108,12 @@ export type OpTupel = {
 
 export interface EvaluateCallback { (resolved: number | boolean): void }
 
-// TODO make abstract class that automatically resolves true and false to its boolean representation
+// TODO Add some more predefined ids like PI etc.
+const PREDEFINED_IDS = {
+  "false": false,
+  "true": true
+};
+
 export abstract class IDResolver {
   protected abstract _resolve(id: string, cb: EvaluateCallback): void;
 
@@ -141,7 +140,7 @@ export abstract class Node {
     return this.negativeSign;
   }
 
-  public eval(next: EvaluateCallback, resolver?: IDResolver): void {
+  public eval(next: EvaluateCallback, resolver?: IDResolver, shortcircuit?: boolean): void {
     if (resolver === undefined) {
       resolver = new class extends IDResolver {
         protected _resolve(id: string, cb: EvaluateCallback): void {
@@ -150,17 +149,21 @@ export abstract class Node {
       };
     }
 
+    if (shortcircuit === undefined) {
+      shortcircuit = true;
+    }
+
     if (this.negativeSign) {
       this.evaluate((res: number | boolean) => {
         next(typeof res == "number" ? -res : !res);
-      }, resolver);
+      }, resolver, shortcircuit);
     }
 
-    this.evaluate(next, resolver);
+    this.evaluate(next, resolver, shortcircuit);
   }
 
   // Never call this method, always call eval() instead. This is just internally called by eval()!
-  protected abstract evaluate(next: EvaluateCallback, resolver: IDResolver): void;
+  protected abstract evaluate(next: EvaluateCallback, resolver: IDResolver, shortcircuit: boolean): void;
 
   public abstract stringify(depth?: number): string;
 }
@@ -184,7 +187,7 @@ export class OpNode extends Node {
     this.operations.push(operation);
   }
 
-  protected evaluate(next: EvaluateCallback, resolver: IDResolver): void {
+  protected evaluate(next: EvaluateCallback, resolver: IDResolver, shortcircuit: boolean): void {
     const self = this;
     let typeOfHead;
 
@@ -196,6 +199,18 @@ export class OpNode extends Node {
       }
 
       const { op, operand } = self.operations[idx];
+
+      // shortcircuit AND
+      if (shortcircuit && op == Operator.AND && !prevValue) {
+        console.log("Shortcircuited");
+        return step(++idx, false);          
+      }
+
+      // shortcircuit OR
+      if (shortcircuit && op == Operator.OR && prevValue) {
+        console.log("Shortcircuited");          
+        return step(++idx, true);
+      }
 
       return operand.eval((value: number | boolean) => {
         let handler = OP_CALC_MAPPING_NUM[op]
@@ -212,9 +227,6 @@ export class OpNode extends Node {
         }
 
         const newValue = handler(prevValue, value);
-
-        // evaluate with shortcircuit if enabled and possible
-        // TODO
 
         return step(++idx, newValue);
       }, resolver);

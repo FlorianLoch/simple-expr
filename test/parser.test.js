@@ -57,4 +57,61 @@ describe("Parser", () => {
             });
         });
     });
+
+    describe("eval: shortcircuit with OR", () => {
+        let rootNode;
+
+        before(() => {
+            rootNode = p.parse("a || b");
+        });
+
+        it("should not evaluate b if a is true already and shortcircuit is enabled", (done) => {
+            shortcircuitEval(rootNode, true, true, false, done);
+        });
+
+        it("should evaluate b if a is true already and shortcircuit is NOT enabled", (done) => {
+            shortcircuitEval(rootNode, false, true, false, done);
+        });
+    });
+
+    describe("eval: shortcircuit with AND", () => {
+        let rootNode;
+
+        before(() => {
+            rootNode = p.parse("a && b");
+        });
+
+        it("should not evaluate b if a is false already and shortcircuit is enabled", (done) => {
+            shortcircuitEval(rootNode, true, false, true, done);
+        });
+
+        it("should evaluate b if a is true already and shortcircuit is NOT enabled", (done) => {
+            shortcircuitEval(rootNode, false, false, true, done);
+        });
+    });    
 });
+
+function shortcircuitEval(rootNode, shortcircuit, expectedResult, ANDMode, done) {
+    let triedToResolveB = false;
+
+    const resolver = new IDResolver();
+    resolver.__proto__._resolve = (varName, next) => {
+        let resolved;
+
+        if (varName === "a") {
+            resolved = !ANDMode;
+        }
+        else if (varName === "b") {
+            triedToResolveB = true;
+            resolved = ANDMode;
+        }
+        //To have real asynchronousity
+        process.nextTick(next.bind(null, resolved));
+    };
+
+    rootNode.eval((result) => {
+        expect(triedToResolveB).to.be.equal(!shortcircuit);
+        expect(result).to.be.equal(expectedResult);
+        done();
+    }, resolver, shortcircuit);
+}
