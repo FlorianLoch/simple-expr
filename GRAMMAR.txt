@@ -1,11 +1,6 @@
 // We do not allow empty expressions!
 E -> Expr #
 
-// This rule is contained in AddExpr, it also causes a conflict here, so drop it
-// Expr -> (AddExpr)                                                    (
-// Can be combined with first rule
-// Expr -> AddExpr                                                      id, num, (
-// to:
 Expr -> LogExpr                                                         id, num, (, plus, minus
 
 LogExpr -> RelExpr LogExpr'                                             id, num, (, plus, minus
@@ -22,26 +17,17 @@ RelExpr' -> equal RelExpr                                               equal
 RelExpr' -> notequal RelExpr                                            notequal
 RelExpr' -> EPS                                                         or, and, #
 
-// AddExpr -> MulExpr plus AddExpr
-// AddExpr -> MulExpr minus AddExpr
-// AddExpr -> MulExpr
 AddExpr -> MulExpr AddExpr'                                             id, num, (, plus, minus
 AddExpr' -> plus AddExpr                                                plus
 AddExpr' -> minus AddExpr                                               minus
 AddExpr' -> EPS                                                         lower, greater, le, ge, equal, notequal, or, and, #
 
-// MulExpr -> PowerExpression mul MulExpr
-// MulExpr -> PowerExpression div MulExpr
-// MulExpr -> PowerExpression mod MulExpr
-// MulExpr -> PowerExpression
 MulExpr -> PowerExpression MulExpr'                                     id, num, (, minus, plus
 MulExpr' -> mul MulExpr                                                 mul
 MulExpr' -> div MulExpr                                                 div
 MulExpr' -> mod MulExpr                                                 mod
 MulExpr' -> EPS                                                         lower, greater, le, ge, equal, notequal, or, and, plus, minus, #
 
-// PowerExpression -> SignedExpression power SignedExpression
-// PowerExpression -> SignedExpression
 PowerExpression -> SignedExpression PowerExpression'                    id, num, (, minus, plus
 PowerExpression' -> power SignedExpression                              power
 PowerExpression' -> EPS                                                 lower, greater, le, ge, equal, notequal, or, and, mul, div, mod, plus, minus, #
