@@ -37,7 +37,7 @@ SignedExpression -> minus CoherentExpression                            minus
 SignedExpression -> negate CoherentExpression                           negate
 SignedExpression -> CoherentExpression                                  (, num, id
 
-CoherentExpression -> ( AddExpr )                                       (
+CoherentExpression -> ( LogExpr )                                       (
 CoherentExpression -> num                                               num
 CoherentExpression -> id                                                id
 CoherentExpression -> bool

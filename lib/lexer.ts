@@ -56,19 +56,28 @@ export class Lexer {
 
     public lex(src: string): Token[] {
         this.idx = 0;
-        this.src = src;
+        this.src = src + "#";
         this.tokens = [];
 
+        let skipNext = false;
+
         this.iterate((c: string, cc: number, tail: string): boolean  => {
-            const lookup2Chars = SIMPLE_TOKEN_MAPPING[tail.substr(0, 2)];
+            // Skip this char in case we found a two char long operator in the last round
+            if (skipNext) {
+                skipNext = false;
+                return true; 
+            }
             
-            if (lookup2Chars) {
-                this.createToken(lookup2Chars);                
+            const lookup2Chars = SIMPLE_TOKEN_MAPPING[tail.substr(0, 2)];
+
+            if (lookup2Chars !== undefined) {
+                this.createToken(lookup2Chars);
+                skipNext = true;
                 return true;
             }
 
             const lookup = SIMPLE_TOKEN_MAPPING[c];
-            
+
             if (lookup !== undefined) {
                 this.createToken(lookup);
             }
@@ -78,7 +87,7 @@ export class Lexer {
             else if ((cc >= 65 && cc <= 90) || (cc >= 97 && cc <= 122)) {
                 this.lexId();
             }
-            
+
             return true;
         });
 
@@ -88,8 +97,8 @@ export class Lexer {
     private iterate(fn: (c: string, cc: number, tail: string) => number | boolean) {
         this.buffer = "";
 
-        for (; this.idx < this.src.length + 1; this.idx++) {
-            const c = this.idx == this.src.length ? "#" : this.src[this.idx];
+        for (; this.idx < this.src.length; this.idx++) {
+            const c = this.src[this.idx];
             const cc = c.charCodeAt(0);
             const tail = this.src.substr(this.idx);
 
@@ -98,7 +107,7 @@ export class Lexer {
                 this.line++;
                 continue;
             }
-        
+
             this.col++;
 
             const trimmedC = c.trim();
@@ -114,7 +123,7 @@ export class Lexer {
                 }
                 break;
             }
-        }      
+        }
     }
 
     private lexNumber() {
@@ -146,11 +155,11 @@ export class Lexer {
         this.iterate((c: string, cc: number): boolean => {
             const isDigit = cc >= 48 && cc <= 57;
             const isLetter = (cc >= 65 && cc <= 90) || (cc >= 97 && cc <= 122);
-            
+
             return isDigit || isLetter;
         });
 
-        this.createToken(TokenType.ID, this.buffer);        
+        this.createToken(TokenType.ID, this.buffer);
     }
 
     private createToken(type: TokenType, value?: string | number): void {

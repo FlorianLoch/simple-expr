@@ -11,73 +11,95 @@ describe("Lexer", () => {
     });
 
     describe("lex", () => {
-        it("should be able to handle simple lexing", () => {
-            const expected = [[
-                    "135.35", [{
-                        tokenType: TokenType.NUM,
-                        value: 135.35
-                    }, {
-                        tokenType: TokenType.EOF
-                    }]
-                ], [
-                    "abc + 135.35 / (54 + d1)", [{
-                        tokenType: TokenType.ID,
-                        value: "abc"
-                    }, {
-                        tokenType: TokenType.PLUS
-                    }, {
-                        tokenType: TokenType.NUM,
-                        value: 135.35
-                    }, {
-                        tokenType: TokenType.DIV 
-                    }, {
-                        tokenType: TokenType.L_PAR 
-                    }, {
-                        tokenType: TokenType.NUM,
-                        value: 54
-                    }, {
-                        tokenType: TokenType.PLUS,
-                    }, {
-                        tokenType: TokenType.ID,
-                        value: "d1"
-                    }, {
-                        tokenType: TokenType.R_PAR 
-                    }, {
-                        tokenType: TokenType.EOF
-                    }]
-                ], [
-                    "(abc || !true) != false && 2", [{
-                        tokenType: TokenType.L_PAR
-                    }, {
-                        tokenType: TokenType.ID,
-                        value: "abc"
-                    }, {
-                        tokenType: TokenType.OR
-                    }, {
-                        tokenType: TokenType.NEGATE
-                    }, {
-                        tokenType: TokenType.ID,
-                        value: "true"
-                    }, {
-                        tokenType: TokenType.R_PAR
-                    }, {
-                        tokenType: TokenType.NE
-                    }, {
-                        tokenType: TokenType.ID,
-                        value: "false"
-                    }, {
-                        tokenType: TokenType.AND
-                    }, {
-                        tokenType: TokenType.NUM,
-                        value: 2
-                    }]
-                ]
-            ];
+        const expected = [[
+            "135.35", [{
+                tokenType: TokenType.NUM,
+                value: 135.35
+            }, {
+                tokenType: TokenType.EOF
+            }]
+        ], [
+            "abc + 135.35 / (54 + d1)", [{
+                tokenType: TokenType.ID,
+                value: "abc"
+            }, {
+                tokenType: TokenType.PLUS
+            }, {
+                tokenType: TokenType.NUM,
+                value: 135.35
+            }, {
+                tokenType: TokenType.DIV
+            }, {
+                tokenType: TokenType.L_PAR
+            }, {
+                tokenType: TokenType.NUM,
+                value: 54
+            }, {
+                tokenType: TokenType.PLUS,
+            }, {
+                tokenType: TokenType.ID,
+                value: "d1"
+            }, {
+                tokenType: TokenType.R_PAR
+            }, {
+                tokenType: TokenType.EOF
+            }]
+        ], [
+            "(abc || !true) != false && 2", [{
+                tokenType: TokenType.L_PAR
+            }, {
+                tokenType: TokenType.ID,
+                value: "abc"
+            }, {
+                tokenType: TokenType.OR
+            }, {
+                tokenType: TokenType.NEGATE
+            }, {
+                tokenType: TokenType.ID,
+                value: "true"
+            }, {
+                tokenType: TokenType.R_PAR
+            }, {
+                tokenType: TokenType.NE
+            }, {
+                tokenType: TokenType.ID,
+                value: "false"
+            }, {
+                tokenType: TokenType.AND
+            }, {
+                tokenType: TokenType.NUM,
+                value: 2
+            }, {
+                tokenType: TokenType.EOF
+            }]
+        ], [
+            "<<===>>=", [{
+                tokenType: TokenType.LOWER
+            }, {
+                tokenType: TokenType.LE
+            }, {
+                tokenType: TokenType.EQ
+            }, {
+                tokenType: TokenType.GREATER
+            }, {
+                tokenType: TokenType.GE
+            }, {
+                tokenType: TokenType.EOF
+            }]
+        ]
+        ];
 
-            expected.forEach((item) => {
+        expected.forEach((item) => {
+            it("should be able to handle lex input: " + item[0], () => {
                 const tokens = l.lex(item[0]);
 
-                expect(tokens.length).to.be.equal(item[1].length);
+                try {
+                    expect(tokens.length).to.be.equal(item[1].length);
+                } catch (err) {
+                    console.log(tokens);
+
+                    throw err;
+                }
 
                 item[1].forEach((expectedToken, idx) => {
                     expect(tokens[idx].type).to.be.equal(expectedToken.tokenType);
