@@ -12,81 +12,95 @@ describe("Lexer", () => {
 
     describe("lex", () => {
         const expected = [[
-            "135.35", [{
-                tokenType: TokenType.NUM,
-                value: 135.35
-            }, {
-                tokenType: TokenType.EOF
-            }]
-        ], [
-            "abc + 135.35 / (54 + d1)", [{
-                tokenType: TokenType.ID,
-                value: "abc"
-            }, {
-                tokenType: TokenType.PLUS
-            }, {
-                tokenType: TokenType.NUM,
-                value: 135.35
-            }, {
-                tokenType: TokenType.DIV
-            }, {
-                tokenType: TokenType.L_PAR
-            }, {
-                tokenType: TokenType.NUM,
-                value: 54
-            }, {
-                tokenType: TokenType.PLUS,
-            }, {
-                tokenType: TokenType.ID,
-                value: "d1"
-            }, {
-                tokenType: TokenType.R_PAR
-            }, {
-                tokenType: TokenType.EOF
-            }]
-        ], [
-            "(abc || !true) != false && 2", [{
-                tokenType: TokenType.L_PAR
-            }, {
-                tokenType: TokenType.ID,
-                value: "abc"
-            }, {
-                tokenType: TokenType.OR
-            }, {
-                tokenType: TokenType.NEGATE
-            }, {
-                tokenType: TokenType.ID,
-                value: "true"
-            }, {
-                tokenType: TokenType.R_PAR
-            }, {
-                tokenType: TokenType.NE
-            }, {
-                tokenType: TokenType.ID,
-                value: "false"
-            }, {
-                tokenType: TokenType.AND
-            }, {
-                tokenType: TokenType.NUM,
-                value: 2
-            }, {
-                tokenType: TokenType.EOF
-            }]
-        ], [
-            "<<===>>=", [{
-                tokenType: TokenType.LOWER
-            }, {
-                tokenType: TokenType.LE
-            }, {
-                tokenType: TokenType.EQ
-            }, {
-                tokenType: TokenType.GREATER
-            }, {
-                tokenType: TokenType.GE
-            }, {
-                tokenType: TokenType.EOF
-            }]
-        ]
+                "135.35", [{
+                    tokenType: TokenType.NUM,
+                    value: 135.35
+                }, {
+                    tokenType: TokenType.EOF
+                }]
+            ], [
+                "abc + 135.35 / (54 + d1)", [{
+                    tokenType: TokenType.ID,
+                    value: "abc"
+                }, {
+                    tokenType: TokenType.PLUS
+                }, {
+                    tokenType: TokenType.NUM,
+                    value: 135.35
+                }, {
+                    tokenType: TokenType.DIV
+                }, {
+                    tokenType: TokenType.L_PAR
+                }, {
+                    tokenType: TokenType.NUM,
+                    value: 54
+                }, {
+                    tokenType: TokenType.PLUS,
+                }, {
+                    tokenType: TokenType.ID,
+                    value: "d1"
+                }, {
+                    tokenType: TokenType.R_PAR
+                }, {
+                    tokenType: TokenType.EOF
+                }]
+            ], [
+                "(abc || !true) != false && 2", [{
+                    tokenType: TokenType.L_PAR
+                }, {
+                    tokenType: TokenType.ID,
+                    value: "abc"
+                }, {
+                    tokenType: TokenType.OR
+                }, {
+                    tokenType: TokenType.NEGATE
+                }, {
+                    tokenType: TokenType.ID,
+                    value: "true"
+                }, {
+                    tokenType: TokenType.R_PAR
+                }, {
+                    tokenType: TokenType.NE
+                }, {
+                    tokenType: TokenType.ID,
+                    value: "false"
+                }, {
+                    tokenType: TokenType.AND
+                }, {
+                    tokenType: TokenType.NUM,
+                    value: 2
+                }, {
+                    tokenType: TokenType.EOF
+                }]
+            ], [
+                "<<===>>=", [{
+                    tokenType: TokenType.LOWER
+                }, {
+                    tokenType: TokenType.LE
+                }, {
+                    tokenType: TokenType.EQ
+                }, {
+                    tokenType: TokenType.GREATER
+                }, {
+                    tokenType: TokenType.GE
+                }, {
+                    tokenType: TokenType.EOF
+                }]
+            ], [
+                "2E4", [{
+                    tokenType: TokenType.NUM,
+                    value: 20000
+                }, {
+                    tokenType: TokenType.EOF
+                }]
+            ], [
+                "E4", [{
+                    tokenType: TokenType.ID,
+                    value: "E4"
+                }, {
+                    tokenType: TokenType.EOF
+                }]
+            ]
         ];
 
         expected.forEach((item) => {

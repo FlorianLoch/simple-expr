@@ -65,9 +65,9 @@ export class Lexer {
             // Skip this char in case we found a two char long operator in the last round
             if (skipNext) {
                 skipNext = false;
-                return true; 
+                return true;
             }
-            
+
             const lookup2Chars = SIMPLE_TOKEN_MAPPING[tail.substr(0, 2)];
 
             if (lookup2Chars !== undefined) {
@@ -128,6 +128,7 @@ export class Lexer {
 
     private lexNumber() {
         let dotsFound = 0;
+        let esFound = 0;
 
         this.iterate((c: string, cc: number): boolean => {
             if (cc >= 48 && cc <= 57) {
@@ -137,8 +138,21 @@ export class Lexer {
             else if (c === ".") {
                 dotsFound++;
 
+                if (esFound > 0) {
+                    this.throwError("Decimal separator not allowed after start of exponential notation (e.g. 2E3.1 is not allowed!)");
+                }
+
                 if (dotsFound > 1) {
                     this.throwError("Found more than one decimal separator in number token!");
+                }
+
+                return true;
+            }
+            else if (c === "e" || c === "E") {
+                esFound++;
+
+                if (esFound > 1) {
+                    this.throwError("Found more than exponent notation beginning (e.g. 2E3)!");
                 }
 
                 return true;

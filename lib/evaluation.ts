@@ -210,7 +210,6 @@ export class OpNode extends Node {
 
       // shortcircuit OR
       if (shortcircuit && op == Operator.OR && prevValue) {
-        console.log("Shortcircuited");          
         return step(++idx, true);
       }
 
